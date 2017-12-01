@@ -81,6 +81,22 @@ macro(init_qt)
     set(CMAKE_AUTOUIC ON) # UI files
 endmacro()
 
+#Copy all files and directories in in_dir to out_dir.
+# Subtrees remain intact.
+MACRO(COPY_DIRECTORY_IF_CHANGED in_dir out_dir target)
+    message("Copying directory ${in_dir}")
+    FILE(GLOB_RECURSE in_file_list ${in_dir}/*)
+    FOREACH(in_file ${in_file_list})
+        if(NOT ${in_file} MATCHES ".*/CVS.*")
+            STRING(REGEX REPLACE ${in_dir} ${out_dir} out_file
+                    ${in_file})
+            COPY_FILE_IF_CHANGED(${in_file} ${out_file} ${target})
+        endif(NOT ${in_file} MATCHES ".*/CVS.*")
+    ENDFOREACH(in_file)
+ENDMACRO(COPY_DIRECTORY_IF_CHANGED)
+
+
+
 init_os_bundle()
 init_qt()
 fix_win_compiler()

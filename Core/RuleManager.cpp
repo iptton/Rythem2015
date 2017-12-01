@@ -11,11 +11,11 @@
 
 QByteArray RuleManager::getRule(PipeData *) {
     QJSEngine engine;
-    QFile file(QCoreApplication::applicationDirPath()+"/Resources/rule.js");
+    QFile file(QCoreApplication::applicationDirPath()+"/../Resources/rule.js");
 //    file.open(QIODevice::ReadOnly);
 
 
-    if(!file.open(QIODevice::ReadWrite))
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         qDebug()<<"fail";
     }else{
@@ -30,6 +30,7 @@ QByteArray RuleManager::getRule(PipeData *) {
 
 
     QJSValue ret = engine.evaluate("getMatchRule('qq.com','/')");
-    QString str = ret.toString();
+    QString str = ret.property("replacement").call().toString();
+    qDebug()<<"response = =====:"<<str;
     return str.toUtf8();
 }

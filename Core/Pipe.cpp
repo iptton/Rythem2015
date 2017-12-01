@@ -52,6 +52,8 @@ void Pipe::parseReqeust(QByteArray &request,bool *isRequestOk) {
                                            "Connection: Close\r\nContent-Length: ").append(QByteArray::number(response.size())).append("\r\n\r\n").append(response);
         }
 
+        qDebug()<<"GOT RES"<<byteArray;
+
         localSocket->write(byteArray);
         localSocket->flush();
         localSocket->waitForBytesWritten(10);

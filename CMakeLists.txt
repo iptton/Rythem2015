@@ -22,7 +22,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR  ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
-set(RESOURCE_FILES res/rule.js) # 不行...
+set(RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/res/rule.js) # 不行...
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 #查找Qt的库
@@ -36,4 +36,4 @@ add_executable(${PROJECT_NAME} ${OS_BUNDLE} # Expands to WIN32 or MACOS_BUNDLE d
         )
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Network Qt5::WebEngineWidgets)
 
-
+SET_SOURCE_FILES_PROPERTIES(${RESOURCE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
