@@ -1,2 +1,5 @@
 cmake-build-debug
 .idea
+PACParserWithQt/build-PACParserWithQt-Desktop_Qt_5_9_2_clang_64bit-Debug
+PACParserWithQt/PACParserWithQt
+PACParserWithQt/Tests
