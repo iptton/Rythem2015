@@ -22,13 +22,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR  ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
-set(RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/res/rule.js) # 不行...
+set(RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/res/rule.js ${CMAKE_CURRENT_SOURCE_DIR}/res/common.js  ${CMAKE_CURRENT_SOURCE_DIR}/res/index.html ${CMAKE_CURRENT_SOURCE_DIR}/res/index.js )
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 #查找Qt的库
 find_package(Qt5 REQUIRED Core Widgets UiTools Network WebEngineWidgets)
 
-set(SOURCE_FILES main.cpp Core/ProxyServer.cpp Core/ProxyServer.h Rythem.cpp Rythem.h Core/Pipe.cpp Core/Pipe.h Core/PipeData.cpp Core/PipeData.h Core/RuleManager.cpp Core/RuleManager.h  GUI/RythemWindow.cpp GUI/RythemWindow.h Core/PACParser.cpp Core/PACParser.h Core/PACExtObject.cpp Core/PACExtObject.h Core/Rule.cpp Core/Rule.h)
+set(SOURCE_FILES main.cpp Core/ProxyServer.cpp Core/ProxyServer.h Rythem.cpp Rythem.h Core/Pipe.cpp Core/Pipe.h Core/PipeData.cpp Core/PipeData.h Core/RuleManager.cpp Core/RuleManager.h  GUI/RythemWindow.cpp GUI/RythemWindow.h Core/PACParser.cpp Core/PACParser.h Core/PACExtObject.cpp Core/PACExtObject.h Core/Rule.cpp Core/Rule.h Core/RuleParserJSExt.cpp Core/RuleParserJSExt.h)
 
 
 add_executable(${PROJECT_NAME} ${OS_BUNDLE} # Expands to WIN32 or MACOS_BUNDLE depending on OS
@@ -37,3 +37,11 @@ add_executable(${PROJECT_NAME} ${OS_BUNDLE} # Expands to WIN32 or MACOS_BUNDLE d
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Network Qt5::WebEngineWidgets)
 
 SET_SOURCE_FILES_PROPERTIES(${RESOURCE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+
+# copy config page files to destination
+if(APPLE)
+    file(COPY ${CMAKE_SOURCE_DIR}/res/rule/ DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.app/Contents/Resources/rule)
+    message("copy file to .app/Contents/Resources")
+elseif(WIN32)
+    file(COPY ${CMAKE_SOURCE_DIR}/res/rule/ DESTINATION {CMAKE_BINARY_DIR}/rule)
+endif()

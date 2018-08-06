@@ -2,6 +2,7 @@
 // Created by ippan on 20/11/17.
 //
 
+#include <QCoreApplication>
 #include "Pipe.h"
 #include "RuleManager.h"
 
@@ -9,7 +10,8 @@ Pipe::Pipe(qintptr socketHandle) :
     QObject(),
     socketHandle(socketHandle),
 localSocket(NULL),
-remoteSocket(NULL){
+remoteSocket(NULL),
+data(NULL){
 
     // TODO 任务保存下来，要考虑复用里面的socket。
 
@@ -32,12 +34,11 @@ void Pipe::localReadyRead() {
     parseReqeust(byteArray,&isRequestOK);
 }
 
-void Pipe::parseReqeust(QByteArray &request,bool *isRequestOk) {
+void Pipe::parseReqeust(const QByteArray request,bool *isRequestOk) {
     data = new PipeData(request);
     if(!data->requestValid()){
         *isRequestOk = false;
         qDebug()<<"wrong request";
-        data->deleteLater();
         return;
     }else{
 
@@ -46,33 +47,65 @@ void Pipe::parseReqeust(QByteArray &request,bool *isRequestOk) {
         QString response="<h1>hello world<h1>";
 
 
-        QByteArray byteArray = RuleManager::getRule(data);
-        if(byteArray.isEmpty()){
-            byteArray = QByteArray("HTTP/1.1 200 OK\r\n"
-                                           "Connection: Close\r\nContent-Length: ").append(QByteArray::number(response.size())).append("\r\n\r\n").append(response);
+        if(data->isLocalRequest &&
+                data->port == 8889){ // Rythem rule page request
+            QString basePath = QCoreApplication::applicationDirPath()+"/../Resources/";
+            QString fullPath = basePath+data->path;
+
+
+            emit onPipeCreated(PipeData_ptr(data));
+            QByteArray byteArray = RuleManager::getLocalContent(fullPath);
+            parseResponse(byteArray);
+
+
+
+        }else {
+
+            // TODO RuleChecker
+            bool changeReq;
+            bool changeRes;
+            QByteArray replacementRes = RuleManager::checkRule(data,&changeReq,&changeRes);
+
+            if(!changeRes){
+                remoteSocket = new QTcpSocket(this);
+                connect(remoteSocket,&QTcpSocket::connected,[=]{
+                    emit onPipeCreated(PipeData_ptr(data));
+
+                    remoteSocket->write(data->requestDataToSend);
+                    remoteSocket->flush();
+                    localSocket->waitForBytesWritten(10);
+                });
+                connect(remoteSocket,&QTcpSocket::readyRead,[=]{
+                    QByteArray byteArray = remoteSocket->readAll();
+                    localSocket->write(byteArray);
+                    localSocket->waitForBytesWritten(10);
+                    localSocket->flush();
+                    parseResponse(byteArray);
+                });
+                connect(remoteSocket,&QTcpSocket::bytesWritten,[=](qint64){
+                    //TODO check if all done.
+                });
+                remoteSocket->connectToHost(data->host,data->port);
+            }else{
+                emit onPipeCreated(PipeData_ptr(data));
+                localSocket->write(replacementRes);
+//                localSocket->waitForBytesWritten(10);
+                localSocket->flush();
+                parseResponse(replacementRes);
+            }
         }
-
-        qDebug()<<"GOT RES"<<byteArray;
-
-        localSocket->write(byteArray);
-        localSocket->flush();
-        localSocket->waitForBytesWritten(10);
-        localSocket->close();
-
-        QSharedPointer<PipeData> data_ptr = QSharedPointer<PipeData>(data);
-        emit onPipeCreated(data_ptr);
-
-        QThread *thread = QThread::currentThread();
-        QThread::currentThread()->quit();
-        connect(thread,&QThread::finished,[=](){
-            QThread::currentThread()->deleteLater();
-        });
     }
 }
 
-void Pipe::parseResponse(QByteArray &byteArray){
+void Pipe::parseResponse(QByteArray byteArray){
     if(!data)return;
-    data->parseResponse(byteArray);
+
+
+    bool isResponseCompleted = data->parseResponse(&byteArray);
+    if(isResponseCompleted){
+//        localSocket->close();
+//        remoteSocket->close();
+    }
 }
 
 void Pipe::moveToThread(QThread *thread) {

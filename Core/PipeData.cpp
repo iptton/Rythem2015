@@ -4,7 +4,7 @@
 
 #include "PipeData.h"
 
-PipeData::PipeData(QByteArray &requestInitialData) {
+PipeData::PipeData(QByteArray requestInitialData) {
     requestDataOri.append(requestInitialData);
     parseRequest();
 
@@ -31,7 +31,7 @@ void PipeData::parseRequest() {
 
     // 解析 header
     QByteArray headerData = requestDataOri.left(deviderIndex);
-    _isRequestOk = parseHeader(headerData); // TODO 如果此时请求不合法，则此请求都应该直接断掉，isRequestOK 应该分两种情况，非法 和 未完整
+    _isRequestOk = parseHeader(&headerData); // TODO 如果此时请求不合法，则此请求都应该直接断掉，isRequestOK 应该分两种情况，非法 和 未完整
     if(!_isRequestOk)return;
 
     // 头已完整，判断 body 是否完整 TODO 是否仅当存在 Content-legnth 才需要判断?
@@ -64,10 +64,11 @@ QStringList PipeData::_acceptedMethods = {
         "CONNECT"
 };// see http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
 
-bool PipeData::parseHeader(QByteArray headerData) {
+bool PipeData::parseHeader(QByteArray *pHeaderData) {
+
 
     // 为方便，将所有 \r\n 换为 \n
-    QByteArray tmp = headerData;
+    QByteArray tmp = QByteArray(*pHeaderData);
     tmp.replace("\r\n","\n");
     QList<QByteArray> headerLines = tmp.split('\n');
     if(headerLines.length() == 0){
@@ -137,17 +138,69 @@ bool PipeData::parseHeader(QByteArray headerData) {
 
 
     while(!headerLines.empty()){
-        QByteArray line = headerLines.takeAt(0);
-        QList<QByteArray> tmp = line.split(':');
+        QString line = headerLines.takeAt(0);
+        QList<QString> tmp = line.split(": ");
         requestHeaders[tmp[0].trimmed().toUpper()]=tmp[1].trimmed();
     }
     if(requestHeaders.contains("HOST")){
         host = requestHeaders["HOST"];
+        if(host.indexOf(":")!=-1){
+            QStringList tmp = host.split(":");
+            host = tmp[0].trimmed();
+            port = tmp[1].trimmed().toInt();
+        }
     }
+    qDebug()<<host<<port<<requestHeaders["HOST"];
+    isLocalRequest = host=="127.0.0.1" || host=="localhost";
 
     return true;
 }
 
-void PipeData::parseResponse(QByteArray &array) {
+bool PipeData::parseResponse(QByteArray* pArray) {
+    QByteArray array = QByteArray(*pArray);
+    appendResponseData(&array);
+    QString splitter = "\n\n";
+    if(!responseHeaderFound) {
+        if (responseByteArray.indexOf("\r\n\r\n") != -1) {
+            splitter = "\r\n\r\n";
+            // header found
+        } else if (array.indexOf("\n\n") != -1) {
+            // header found
+        } else {
+            return false;
+        }
+        responseHeaderFound = true;
 
+        //
+        int headerSplitterIndex = responseByteArray.indexOf(splitter);
+        QString headerTmp = responseByteArray.left(headerSplitterIndex);
+        responseByteArray = responseByteArray.mid(headerSplitterIndex+splitter.size());
+
+        QStringList headerList = headerTmp.split(splitter);
+        // HTTP/1.1 200 OK
+
+
+    }
+
+    responseBody.append(responseByteArray);
+    responseByteArray.clear();
+
+
+    if(responseHeaders.contains("CONTENT-LENGTH")){
+        ulong contentLength = responseHeaders["Content-Length"].toULong();
+        if(contentLength <= responseBody.size()){
+            // finished.
+            return true;
+        }
+    }else{
+        // TODO trunk
+        // 无 content-length ，默认认为一次就全返回。
+        return true;
+    }
+
+
+}
+
+bool PipeData::appendResponseData(QByteArray *ba) {
+    responseByteArray.append(QByteArray(*ba));
 }

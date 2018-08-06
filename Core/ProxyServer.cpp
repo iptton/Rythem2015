@@ -28,5 +28,4 @@ void ProxyServer::incomingConnection(qintptr handle) {
             }
     );
     thread->start();
-
 }

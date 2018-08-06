@@ -2,6 +2,7 @@
 // Created by ippan on 30/11/17.
 //
 
+#include <QCoreApplication>
 #include "RythemWindow.h"
 #include "ui_mainwindow.h"
 
@@ -13,6 +14,11 @@ RythemWindow::RythemWindow(ProxyServer* _server, QWidget *parent) :
     server(_server){
 
     ui->setupUi(this);
+
+    QString settingFilePath = "file://"+QCoreApplication::applicationDirPath()+"/../Resources/index.html";
+    qDebug()<<settingFilePath;
+
+    ui->webEngineView->load(QUrl(settingFilePath));
 
     connect(ui->mainToolBar,&QToolBar::actionTriggered,this,&RythemWindow::onActionTriggered);
 }

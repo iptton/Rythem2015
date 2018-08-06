@@ -17,7 +17,7 @@ class PipeData : public QObject {
     Q_DISABLE_COPY(PipeData)
 
 public:
-    PipeData(QByteArray& requestInitialData);
+    PipeData(QByteArray requestInitialData);
 
 
 
@@ -29,9 +29,9 @@ private:
     static QStringList _acceptedMethods;
 
     void parseRequest();
-    bool parseHeader(QByteArray array);
-    bool appendRequestData(QByteArray);
-    bool appendResponseData(QByteArray);
+    bool parseHeader(QByteArray *array);
+    bool appendRequestData(QByteArray*);
+    bool appendResponseData(QByteArray*);
 
 
 public:
@@ -52,15 +52,21 @@ public:
 
     QByteArray requestDataToSend; // 处理过后的请求数据
 
+
     QMap<QString,QString> requestHeaders;
     QByteArray requestBody;
     QByteArray requestHeaderByteArray;
-    QMap<QString,QString> responseHeaders;
 
     bool isConnectTunnel;
     QString sigsToSend;
 
-    void parseResponse(QByteArray &array);
+
+    bool responseHeaderFound = false;
+    QByteArray responseBody;
+    QByteArray responseByteArray;
+    QMap<QString,QString> responseHeaders;
+
+    bool parseResponse(QByteArray* array);
 };
 
 

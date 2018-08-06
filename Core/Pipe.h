@@ -33,13 +33,14 @@ public:
 
 signals:
     void onPipeCreated(PipeData_ptr);
+    void onPipeComplete(PipeData_ptr);
 
 
 protected slots:
     void localReadyRead();
 
-    void parseReqeust(QByteArray&,bool *isRequestOk);
-    void parseResponse(QByteArray&);
+    void parseReqeust(const QByteArray,bool *isRequestOk);
+    void parseResponse(const QByteArray);
 
 private:
     QTcpSocket *localSocket;

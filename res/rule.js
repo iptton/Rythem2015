@@ -1,21 +1,19 @@
 function getMatchRule(host,path){
     var rule = null;
-    if(true || host=="127.0.0.1"){
-        rule = new Rule(TYPE_CONTENT,function(){
-            var body = "hello from js <h1>You're requesting path:"+path+"</h1>";
-            var contentLength = body.length;
-           return "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nContent-Length: "+contentLength+"\r\n\r\n"+body;
-        });
+
+    if(host.indexOf("qq.com") != -1){
+        rule = {
+            "replacement":"/Users/ippan/CLionProjects/QtInClion/cmake-build-debug/Rythem2015.app/Contents/Resources"+path,
+            "type":0
+        }
+    }else{
+        rule = {
+            "type":-1
+        }
     }
     return rule;
 }
 
 
-var TYPE_CONTENT = 0;
-var TYPE_BLOCK = 1;
 
 
-function Rule(type,replacement){
-    this.type = type;
-    this.replacement = replacement;
-}
